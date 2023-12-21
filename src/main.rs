@@ -5,6 +5,13 @@ use std::path::Path;
 use std::fs;
 use std::env;
 
+#[derive(Debug, Clone)]
+struct Module {
+    file_path: String,
+    module_content: String,
+    dependencies: Vec<Module>,
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let entry_point = args.get(1).expect("No entry point specified");
