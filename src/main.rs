@@ -18,8 +18,9 @@ fn main() {
     let abs_path = change_to_abs_path(entry_point);
 
     let result = new_module(&abs_path);
+    let collected = collect_modules(result);
 
-    println!("result {:?}", result);
+    println!("result {:?}", collected);
 }
 
 fn change_to_abs_path(file_path: &String) -> String {
@@ -55,11 +56,41 @@ fn new_module(file_path: &String) -> Module {
     };
 }
 
+fn copy_module(module: &Module) -> Module {
+    let mut dependencies: Vec<Module> = Vec::new();
+
+    for dep in &module.dependencies {
+        dependencies.push(copy_module(dep));
+    }
+
+    let _module = Module {
+        file_path: module.file_path.clone(),
+        module_content: module.module_content.clone(),
+        dependencies: dependencies,
+    };
+
+    return _module;
+}
+
+fn collect_modules(graph: Module) -> Vec<Module> {
+    let mut mods: Vec<Module> = Vec::new();
+
+    collect(graph, &mut mods);
+
+    fn collect(module: Module, mods: &mut Vec<Module>) {
+        mods.push(copy_module(&module));
+
+        for dep in module.dependencies {
+            collect(dep, mods);
+        }
+    }
+
+    return mods;
+}
+
 fn parse_iterate_module<F: FnMut(&SyntaxNode) -> bool>(content: &String, cb: &mut F) -> () {
     let parse = parse_module(content, 0);
     let mut syntax_node = parse.syntax().first_child();
-
-    // println!("parsed AST: {:?}", parse);
 
     loop {
         let mut _node = syntax_node.unwrap();
