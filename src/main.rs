@@ -1,9 +1,6 @@
-use rslint_parser::{parse_module, SyntaxKind};
+use rslint_parser::{parse_module, SyntaxKind, SyntaxNode};
 use path_absolutize::*;
 
-use std::collections::HashSet;
-use std::fs::File;
-use std::io::Write;
 use std::path::Path;
 use std::fs;
 use std::env;
@@ -20,44 +17,71 @@ fn main() {
     let entry_point = args.get(1).expect("No entry point specified");
     let abs_path = change_to_abs_path(entry_point);
 
-    let mut processed_files = HashSet::new();
-    let bundled_content = process_file(&abs_path, &mut processed_files);
-
-    let output_file_path = "bundle.js";
-    let mut output_file = File::create(output_file_path).expect("Unable to create file");
-    output_file.write_all(bundled_content.as_bytes()).expect("Unable to write data");
-    println!("Bundle written to {}", output_file_path);
-
+    parse_to_ast(entry_point)
 }
 
-
-fn trim_quotes(s: &str) -> String {
-    if s.starts_with('\'') && s.ends_with('\'') || s.starts_with('\"') && s.ends_with('\"') {
-        s[1..s.len() - 1].to_string()
-    } else {
-        s.to_string()
-    }
-}
-
-fn parse_to_ast(file_path: &String) -> Vec<String> {
-    let contents = fs::read_to_string(file_path).expect("error reading");
-    let parse = parse_module(&contents, 0);
-    let mut imports = Vec::new();
-
-    println!("parsed syntax: {}", parse.syntax());
-
-    for node in parse.syntax().descendants() {
-        if node.kind() == SyntaxKind::IMPORT_DECL {
-            if let Some(literal) = node.children().find(|n| n.kind() == SyntaxKind::STRING) {
-                let import_path = trim_quotes(&literal.text().to_string());
-                imports.push(change_to_abs_path(&import_path));
-            }
+fn parse_iterate_module<F: FnMut(&SyntaxNode) -> bool>(content: &String, cb: &mut F) -> () {
+    let parse = parse_module(content, 0);
+    let mut syntax_node = parse.syntax().first_child();
+  
+    // println!("parsed AST: {:?}", parse);
+  
+    loop {
+        let mut _node = syntax_node.unwrap();
+        let cont = cb(&_node);
+  
+        if !cont {
+            break;
+        }
+  
+        syntax_node = match _node.next_sibling() {
+            Some(next) => Some(next),
+            _ => break,
         }
     }
+  }
+  
+  
+  fn parse_module_imports(content: &String) -> Vec<String> {
+    let mut sources = Vec::new();
+    let mut _iter = |_node: &SyntaxNode| -> bool {
+        if _node.kind() == SyntaxKind::IMPORT_DECL {
+            let mut _import_node = _node.first_child();
+  
+            'import: loop {
+                while let Some(_in) = _import_node {
+                    if _in.kind() == SyntaxKind::LITERAL {
+                        let src = _in
+                            .text()
+                            .to_string()
+                            .replace(&['\'', '\"', ' ', '\t'][..], "")
+                            .to_owned();
+  
+                        println!("src:{:?}", &src);
+                        sources.push(src);
+  
+                        break 'import;
+                    }
+  
+                    _import_node = _in.next_sibling();
+                }
+            }
+        }
+  
+        return true;
+    };
+  
+    parse_iterate_module(content, &mut _iter);
+  
+    return sources;
+  }
+  
 
-    println!("string contents: {:?}", contents);
+fn parse_to_ast(file_path: &String) {
+    let contents = fs::read_to_string(file_path).expect("error reading");
+    let a = parse_module_imports(&contents);
 
-    imports
+    println!("this is imported {:?}", a);
 }
 
 fn change_to_abs_path(file_path: &String) -> String {
@@ -67,21 +91,4 @@ fn change_to_abs_path(file_path: &String) -> String {
     println!("Absolute path: {}", absolute_path);
 
     absolute_path
-}
-
-fn process_file(file_path: &String, processed_files: &mut HashSet<String>) -> String {
-    if !processed_files.insert(file_path.clone()) {
-        return String::new(); // Skip already processed files to avoid infinite loops
-    }
-
-    let contents = fs::read_to_string(file_path).expect("error reading file");
-    let import_paths = parse_to_ast(file_path);
-    let mut combined_content = contents;
-
-    for import_path in import_paths {
-        let import_content = process_file(&import_path, processed_files);
-        combined_content.push_str(&import_content);
-    }
-
-    combined_content
 }
