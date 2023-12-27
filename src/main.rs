@@ -140,7 +140,7 @@ fn parse_module_imports(content: &String) -> Vec<String> {
     return sources;
 }
 
-fn trnasform_module_interface(module: &mut Module) {
+fn transform_module_interface(module: &mut Module) {
     let mod_copy = copy_module(&module);
     let mut _iter = |_node: &SyntaxNode| -> bool {
         if _node.kind() == SyntaxKind::IMPORT_DECL {
@@ -243,4 +243,23 @@ fn trnasform_module_interface(module: &mut Module) {
     };
 
     parse_iterate_module(&mod_copy.module_content.to_string(), &mut _iter);
+}
+
+fn to_module_map(modules: &mut Vec<Module>) -> String {
+    let mut module_map = String::from("{");
+
+    for module in modules.iter_mut() {
+        transform_module_interface(module);
+
+        module_map.push_str(
+            &format!(
+                "\"{}\": function(exports, require) {{  {} }},",
+                module.file_path, module.module_content
+            )[..],
+        );
+    }
+
+    module_map.push_str("}");
+
+    return module_map;
 }
