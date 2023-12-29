@@ -18,14 +18,18 @@ fn main() {
     let abs_path = change_to_abs_path(entry_point);
 
     let result = new_module(&abs_path);
-    let collected = collect_modules(result);
+    let mut collected = collect_modules(result);
+    let module_map = to_module_map(&mut collected);
+    let runtime = add_runtime(&module_map, &abs_path);
 
     println!("result {:?}", collected);
+    println!("module map {:?}", module_map);
+    println!("runtime format {:?}", runtime);
 }
 
 fn change_to_abs_path(file_path: &String) -> String {
     let relative_path = Path::new(file_path);
-    let absolute_path = relative_path.absolutize().unwrap().to_str().unwrap().to_string();
+    let absolute_path = relative_path.absolutize().unwrap().to_str().unwrap().to_owned();
 
     println!("Absolute path: {}", absolute_path);
 
@@ -262,4 +266,50 @@ fn to_module_map(modules: &mut Vec<Module>) -> String {
     module_map.push_str("}");
 
     return module_map;
+}
+
+fn add_runtime(module_map: &String, entry_point: &String) -> String {
+    let runtime = String::from(format!(
+        "
+    (function() {{
+            // Modules will be added here
+            const modules = {};
+            const entry = \"{}\";
+
+            // Module cache to store instantiated modules
+            const moduleCache = {{}};
+
+            // Custom require function to load modules
+            const require = moduleName => {{
+                // Check if module is in cache
+                if (moduleCache[moduleName]) {{
+                    return moduleCache[moduleName].exports;
+                }}
+
+                // If not, initialize and load the module
+                const module = {{ exports: {{}} }};
+                moduleCache[moduleName] = module;
+
+                try {{
+                    modules[moduleName](module.exports, require);
+                }} catch (error) {{
+                    throw new Error('Module load error in ' + moduleName + ': ' + error.message);
+                }}
+
+                // Return the exports from the module
+                return module.exports;
+            }};
+
+            // Start the application by requiring the entry module
+            try {{
+                require(entry);
+            }} catch (error) {{
+                console.error('Application failed to start: ' + error.message);
+            }}
+        }})();
+    ",
+        module_map, entry_point
+    ));
+
+    return runtime;
 }
