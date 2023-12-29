@@ -122,8 +122,7 @@ fn parse_module_imports(content: &String) -> Vec<String> {
                         let src = _in
                             .text()
                             .to_string()
-                            .replace(&['\'', '\"', ' ', '\t'][..], "")
-                            .to_owned();
+                            .replace(&['\'', '\"', ' ', '\t'][..], "");
 
                         println!("src:{:?}", &src);
                         sources.push(src);
