@@ -1,6 +1,7 @@
 use path_absolutize::*;
 use rslint_parser::{parse_module, SyntaxKind, SyntaxNode};
 
+use std::io::Write;
 use std::path::Path;
 use std::fs;
 use std::env;
@@ -14,24 +15,16 @@ struct Module {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let entry_point = args.get(1).expect("No entry point specified");
-    let abs_path = change_to_abs_path(entry_point);
-
-    let result = new_module(&abs_path);
-    let mut collected = collect_modules(result);
-    let module_map = to_module_map(&mut collected);
-    let runtime = add_runtime(&module_map, &abs_path);
-
-    println!("result {:?}", collected);
-    println!("module map {:?}", module_map);
-    println!("runtime format {:?}", runtime);
+    if args.len() < 3 || (args.len() == 1 && &args[1] == "-h") {
+        println!("usage: bundler [entry point] [output directory]");
+        return;
+    }
+    build(&String::from(&args[1]), &String::from(&args[2]));
 }
 
 fn change_to_abs_path(file_path: &String) -> String {
     let relative_path = Path::new(file_path);
     let absolute_path = relative_path.absolutize().unwrap().to_str().unwrap().to_owned();
-
-    println!("Absolute path: {}", absolute_path);
 
     absolute_path
 }
@@ -124,7 +117,6 @@ fn parse_module_imports(content: &String) -> Vec<String> {
                             .to_string()
                             .replace(&['\'', '\"', ' ', '\t'][..], "");
 
-                        println!("src:{:?}", &src);
                         sources.push(src);
 
                         break 'import;
@@ -319,4 +311,22 @@ fn bundle(graph: Module) -> (String, String) {
     let module_code = add_runtime(&module_map, &modules.first().unwrap().file_path);
 
     return (String::from("bundle.js"), module_code);
+}
+
+fn build(entry_file: &String, output_folder: &String) -> () {
+    let graph = new_module(&entry_file);
+
+    println!("dependency graph generated");
+
+    let (file_name, code) = bundle(graph);
+
+    println!("bundle generated");
+    // create the full path
+    let path = Path::new(output_folder).join(file_name);
+    let mut file = fs::File::create(path).expect("error creating output path");
+
+    file.write_all(code.as_bytes())
+        .expect("error writing to output file");
+
+    println!("bundle write complete");
 }
