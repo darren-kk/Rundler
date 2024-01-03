@@ -231,9 +231,8 @@ fn transform_module_interface(module: &mut Module) {
             module.module_content = module
                 .module_content
                 .replace(&_node.text().to_string(), &new_stmt);
-        } else {
-            // println!("{:?}", _node);
         }
+
         return true;
     };
 
@@ -321,7 +320,7 @@ fn build(entry_file: &String, output_folder: &String) -> () {
     let (file_name, code) = bundle(graph);
 
     println!("bundle generated");
-    // create the full path
+
     let path = Path::new(output_folder).join(file_name);
     let mut file = fs::File::create(path).expect("error creating output path");
 
