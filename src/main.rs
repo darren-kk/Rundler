@@ -312,3 +312,11 @@ fn add_runtime(module_map: &String, entry_point: &String) -> String {
 
     return runtime;
 }
+
+fn bundle(graph: Module) -> (String, String) {
+    let mut modules = collect_modules(graph);
+    let module_map = to_module_map(&mut modules);
+    let module_code = add_runtime(&module_map, &modules.first().unwrap().file_path);
+
+    return (String::from("bundle.js"), module_code);
+}
