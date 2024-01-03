@@ -3,6 +3,7 @@ use rslint_parser::{parse_module, SyntaxKind, SyntaxNode};
 
 use std::io::Write;
 use std::path::Path;
+use std::time::Instant;
 use std::fs;
 use std::env;
 
@@ -14,12 +15,16 @@ struct Module {
 }
 
 fn main() {
+    let start = Instant::now();
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 || (args.len() == 1 && &args[1] == "-h") {
         println!("usage: bundler [entry point] [output directory]");
         return;
     }
     build(&String::from(&args[1]), &String::from(&args[2]));
+    let duration = start.elapsed();
+
+    println!("Time taken: {:?}", duration);
 }
 
 fn change_to_abs_path(file_path: &String) -> String {
