@@ -1,3 +1,7 @@
-export function foo(x) {
-  return x * 2;
+import boo from "./boo.js";
+
+function foo(x) {
+  return boo(x);
 }
+
+export default foo;
