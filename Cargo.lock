@@ -3,6 +3,15 @@
 version = 3
 
 [[package]]
+name = "Rundler"
+version = "0.1.0"
+dependencies = [
+ "npm_rs",
+ "path-absolutize",
+ "rslint_parser",
+]
+
+[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -371,15 +380,6 @@ name = "text-size"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f18aa187839b2bdb1ad2fa35ead8c4c2976b64e4363c386d45ac0f7ee85c9233"
-
-[[package]]
-name = "toy_js_bundler"
-version = "0.1.0"
-dependencies = [
- "npm_rs",
- "path-absolutize",
- "rslint_parser",
-]
 
 [[package]]
 name = "triomphe"

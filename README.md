@@ -1,6 +1,8 @@
-# mini JS toy bundler with rust
+# Rundler
 
-Entry point와 output 경로를 입력하면, 코드를 분석해 모듈 의존성 그래프의 생성 및 하나의 파일로 번들링을 해주는 JS 번들러입니다.
+Rust로 만든 JS 번들러입니다.
+
+Entry point와 output 경로를 입력하면, 코드를 분석해 모듈 의존성 그래프의 생성 및 하나의 파일로 번들링을 해줍니다.
 
 ESM 기반의 모듈 시스템을 CJS로 변경 및 해당 CJS 구문들이 브라우저에서 잘 실행될 수 있도록 번들링 됩니다.
 
@@ -22,7 +24,7 @@ rust 언어 학습을 목적으로 언어에 대한 이해와 실제 사용을 �
 
 보다 자세한 개발과정 및 각 로직별 흐름과 다른 번들러와의 비교는 아래 링크에서 확인 하실 수 있습니다.
 
-[Toy Bundler Project 구현 기록](https://poised-moon-73b.notion.site/Toy-Bundler-project-254fdf0acc3247ccbaaf23cfdad80085?pvs=4)
+[Rundler 구현 기록](https://poised-moon-73b.notion.site/Toy-Bundler-project-254fdf0acc3247ccbaaf23cfdad80085?pvs=4)
 
 # Flow Chart
 
